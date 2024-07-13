@@ -1,0 +1,98 @@
+<html>
+    <head>
+        <!-- Einbindung der LUI-Bibliothek für UI-Komponenten und Zustandsmanagement -->
+        <script src="https://cdn.jsdelivr.net/gh/L3P3/lui@2/luix.dev.js"></script>
+    </head>
+    <body>
+        <script>
+            // Destructuring, um spezifische Funktionen aus der LUI-Bibliothek zu extrahieren
+            const {
+                hook_dom, // Zum Manipulieren des DOMs
+                hook_effect, // Für Nebeneffekte (z.B. Änderungen am Dokumententitel)
+                hook_state, // Zum Erstellen von Zuständen
+                hook_transition, // Für animierte Übergänge
+                init, // Initialisiert die Root-Komponente
+                node_dom, // Erstellt DOM-Knoten
+                node, // Erstellt Komponentenknoten
+            } = lui;
+
+            // Komponente Box, die eine Box mit dynamischer Farbe und Größe basierend auf dem count darstellt
+            function Box({
+                count, // Der Zählerwert für die Box
+                color = "yellow", // Standardfarbe der Box
+                delay = 500, // Standardverzögerung für die Animation
+            }) {
+                // Dynamische Farbzuweisung basierend auf dem Wert von count
+                const dynamicColor = count < 0 ? (color === "blue" ? "red" : "green") : color;
+                // Erstellung des Box-DOM-Elements mit dynamischen Stilen und Inhalt
+                return [
+                    node_dom("div", {
+                        S: { // Stilobjekt
+                            background: dynamicColor, // Hintergrundfarbe
+                            width: hook_transition(Math.abs(count)*50, delay) + "px", // Breite basierend auf count
+                            height: "100px", // Feste Höhe
+                            display: "flex", // Flexbox für Zentrierung des Inhalts
+                            justifyContent: "center", // Zentriert horizontal
+                            alignItems: "center", // Zentriert vertikal
+                            color: "white", // Textfarbe
+                        },
+                        innerText: `Count: ${count}`, // Anzeige des Zählerwerts
+                    }),
+                ];
+            }
+            
+            // Root-Komponente, die die Hauptanwendung darstellt
+            function Root() {
+                // Zustände für Titel, Farbe und Zähler mit Standardwerten
+                const [title, title_set] = hook_state("Hallo, Welt!");
+                const [color, color_set] = hook_state("pink");
+                const [count, count_set] = hook_state(0);
+
+                // Anwendung des Hintergrundfarben-Zustands auf den Body
+                hook_dom("", {
+                    S: {
+                        background: color,
+                    },
+                });
+
+                // Effekt zum Aktualisieren des Dokumententitels, wenn sich der Titel-Zustand ändert
+                hook_effect(() => {
+                    document.title = title;
+                }, [title]);
+
+                // Erstellung der UI-Elemente: Titel, zwei Schaltflächen und zwei Boxen
+                return [
+                    node_dom("h1", {
+                        innerText: title + " " + count, // Anzeige des Titels und des Zählerwerts
+                    }),
+                    node_dom("button", {
+                        innerText: "Tschüss", // Schaltflächentext
+                        onclick: () => { // Ereignisbehandler für Klick
+                            title_set("Tschüss, Welt!"); // Ändert den Titel
+                            color_set("purple"); // Ändert die Hintergrundfarbe
+                            count_set(count-1); // Dekrementiert den Zähler
+                        },
+                    }),
+                    node_dom("button", {
+                        innerText: "Hallo", // Schaltflächentext
+                        onclick: () => { // Ereignisbehandler für Klick
+                            title_set("Hallo, Welt!"); // Ändert den Titel
+                            color_set("pink"); // Ändert die Hintergrundfarbe
+                            count_set(count+1); // Inkrementiert den Zähler
+                        },
+                    }),
+                    node(Box, { // Erste Box ohne spezifische Farbangabe (nutzt Standard)
+                        count,
+                        delay: 1000, // Verzögerung für die Animation
+                    }),
+                    node(Box, { // Zweite Box mit expliziter Farbangabe
+                        count: count+5, // Zählerwert um 5 erhöht
+                        color: "blue", // Spezifische Farbe
+                    }),
+                ];
+            }
+            // Initialisierung der Root-Komponente, um die Anwendung zu starten
+            init(Root);
+        </script>
+    </body>
+</html>
